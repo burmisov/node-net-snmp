@@ -215,7 +215,13 @@ function readInt (buffer) {
 
 function readUint (buffer, isSigned) {
 	buffer.readByte ();
-	var length = buffer.readByte ();
+
+	var length, mayBeLength = buffer.readByte();
+	if (mayBeLength === 129) {
+			var length = buffer.readByte ();
+	} else {
+			var length = mayBeLength;
+	}
 
 	if (length > 5) {
 		 throw new RangeError ("Integer too long '" + length + "'");
@@ -226,7 +232,7 @@ function readUint (buffer, isSigned) {
 	}
 
 	value = 0, signedBitSet = false;
-	
+
 	for (var i = 0; i < length; i++) {
 		value *= 256;
 		value += buffer.readByte ();
@@ -236,7 +242,7 @@ function readUint (buffer, isSigned) {
 				signedBitSet = true;
 		}
 	}
-	
+
 	if (signedBitSet)
 		value -= (1 << (i * 8));
 
@@ -592,7 +598,7 @@ var Session = function (target, community, options) {
 
 	this.dgram = dgram.createSocket (this.transport);
 	this.dgram.unref();
-	
+
 	var me = this;
 	this.dgram.on ("message", me.onMsg.bind (me));
 	this.dgram.on ("close", me.onClose.bind (me));
@@ -818,7 +824,7 @@ Session.prototype.inform = function () {
 
 	/**
 	 ** Support the following signatures:
-	 ** 
+	 **
 	 **    typeOrOid, varbinds, options, callback
 	 **    typeOrOid, varbinds, callback
 	 **    typeOrOid, options, callback
@@ -891,7 +897,7 @@ Session.prototype.inform = function () {
 		};
 		pduVarbinds.push (varbind);
 	}
-	
+
 	options.port = this.trapPort;
 
 	this.simpleGet (InformRequestPdu, feedCb, pduVarbinds, responseCb, options);
@@ -983,7 +989,7 @@ Session.prototype.registerRequest = function (req) {
 Session.prototype.send = function (req, noWait) {
 	try {
 		var me = this;
-		
+
 		var buffer = req.message.toBuffer ();
 
 		this.dgram.send (buffer, 0, buffer.length, req.port, this.target,
@@ -1001,7 +1007,7 @@ Session.prototype.send = function (req, noWait) {
 	} catch (error) {
 		req.responseCb (error);
 	}
-	
+
 	return this;
 };
 
@@ -1254,7 +1260,7 @@ Session.prototype.trap = function () {
 
 		/**
 		 ** Support the following signatures:
-		 ** 
+		 **
 		 **    typeOrOid, varbinds, options, callback
 		 **    typeOrOid, varbinds, agentAddr, callback
 		 **    typeOrOid, varbinds, callback
@@ -1297,7 +1303,7 @@ Session.prototype.trap = function () {
 			};
 			pduVarbinds.push (varbind);
 		}
-		
+
 		var id = _generateId ();
 
 		if (this.version == Version2c) {
